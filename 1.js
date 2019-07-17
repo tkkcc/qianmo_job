@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         qianmo
+// @name         qianmo_job
 // @version      0.0.1
 // @include      http://newqianmo.baidu.com/404
 // @description  self mode
