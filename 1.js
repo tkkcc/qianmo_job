@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         qianmo_job
-// @version      0.0.1
+// @version      0.0.2
 // @include      http://newqianmo.baidu.com/404
 // @description  self mode
 // @run-at       document-start
@@ -35,7 +35,7 @@ const head = `<meta charset="UTF-8" />
     color: #9E9E9E;
   }
   div.cancelled {
-    color: #9E9E9E;
+    color: #FF5722;
   }
   div.failed {
     color: #E91E63;
@@ -46,8 +46,8 @@ const head = `<meta charset="UTF-8" />
   div.pending {
     color: #FF9800;
   }
-  div.pending {
-    color: #FF9800;
+  div.preempted {
+    color: #3f51b5;
   }
   #disconnect{
     display: none;
@@ -60,15 +60,22 @@ const head = `<meta charset="UTF-8" />
     user-select:none;
     cursor:pointer;
   }
+  div.section{
+    grid-column: 1 / -1;
+  }
+  iframe{
+    display: none;
+  }
 </style>`
 const body = `<div id="app">
 <div id='disconnect'>disconnect</div>
 <div id="node"></div>
 <div id="table"></div>
+<iframe src="http://newqianmo.baidu.com/index.jsp#/console"></iframe>
 </div>`
 document.head.innerHTML = head
 document.body.innerHTML = body
-const timeout = 30000
+const timeout = 10000
 const app = document.querySelector('#app')
 const node = document.querySelector('#node')
 const table = document.querySelector('#table')
@@ -77,7 +84,6 @@ const copy = text => {
   const textArea = document.createElement('textarea')
   textArea.value = text
   document.body.appendChild(textArea)
-  textArea.focus()
   textArea.select()
   document.execCommand('copy')
   document.body.removeChild(textArea)
@@ -116,7 +122,9 @@ const main = async () => {
       fetchTask('RUNNING'),
       fetchTask('PENDING', 5),
       fetchTask('FAILED', 5),
-      fetchTask('COMPLETED', 5)
+      fetchTask('PREEMPTED', 5)
+      //fetchTask('CANCELLED', 5),
+      //fetchTask('COMPLETED', 5),
     ]))
       .filter(i => i)
       .flat()
@@ -125,6 +133,7 @@ const main = async () => {
     return
   }
   disconnect.style.display = 'none'
+  let type_pre = ''
   let b = data.reduce((a, c) => {
     let url = ''
     try {
@@ -144,7 +153,7 @@ const main = async () => {
     const list = [
       c.jobName,
       c.jobId,
-      c.slurmId,
+      c.priority,
       c.queueName,
       c.ncpus,
       c.gpuRatio,
@@ -153,6 +162,10 @@ const main = async () => {
       link
     ]
     const type = c.status.toLowerCase()
+    if (type !== type_pre) {
+      type_pre = type
+      a += `<div class="section ${type}">${type}</div>`
+    }
     const row = list.map(i => `<div class=${type}>` + i + '</div>').join('')
     return a + row
   }, '')
@@ -184,7 +197,6 @@ const main = async () => {
     copy(text)
   })
 }
-
 main()
 let timer = setInterval(main, timeout)
 let changeTimer
@@ -199,3 +211,8 @@ document.addEventListener('visibilitychange', () => {
     timer = setInterval(main, timeout)
   }
 })
+
+const frame = document.querySelector('iframe')
+setInterval(() => {
+  frame.contentWindow.location.reload()
+}, 1000 * 3600)
