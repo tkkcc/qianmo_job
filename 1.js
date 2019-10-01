@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         qianmo_job
-// @version      0.0.2
+// @version      0.0.3
 // @include      http://newqianmo.baidu.com/404
 // @description  self mode
 // @run-at       document-start
@@ -114,7 +114,6 @@ const fetchTask = async (type = '', size = 20) => {
   const url = `http://newqianmo.baidu.com/action/gpu/queryGpuJobListPerson?pageNum=1&pageSize=${size}&isProjectList=0&jobId=&jobName=&queueName=&status=`
   return await fetchList(url + type)
 }
-
 const main = async () => {
   let data
   try {
@@ -122,8 +121,8 @@ const main = async () => {
       fetchTask('RUNNING'),
       fetchTask('PENDING', 5),
       fetchTask('FAILED', 5),
-      fetchTask('PREEMPTED', 5)
-      //fetchTask('CANCELLED', 5),
+      fetchTask('PREEMPTED', 5),
+      fetchTask('CANCELLED', 5)
       //fetchTask('COMPLETED', 5),
     ]))
       .filter(i => i)
@@ -184,23 +183,22 @@ const main = async () => {
     node.innerHTML = d
     table.innerHTML = b
   })
-  document.addEventListener('click', e => {
-    const type = e.target.textContent
-    const target = e.target
-    let text = ''
-    if (['ssh', 'rsync', 'deljob'].includes(type)) {
-      text = target.dataset.copy
-    } else if (target.children.length === 0) {
-      text = target.textContent.trim()
-    }
-    if (text.length === 0) return
-    copy(text)
-  })
 }
 main()
 let timer = setInterval(main, timeout)
 let changeTimer
-
+document.addEventListener('click', e => {
+  const type = e.target.textContent
+  const target = e.target
+  let text = ''
+  if (['ssh', 'rsync', 'deljob'].includes(type)) {
+    text = target.dataset.copy
+  } else if (target.children.length === 0) {
+    text = target.textContent.trim()
+  }
+  if (text.length === 0) return
+  copy(text)
+})
 document.addEventListener('visibilitychange', () => {
   clearTimeout(changeTimer)
   if (document.hidden) {
